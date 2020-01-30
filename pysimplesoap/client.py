@@ -253,7 +253,9 @@ class SoapClient(object):
                                     self.__headers, soap_uri)
 
         self.xml_request = request.as_xml()
-        self.xml_response = self.send(method, self.xml_request)
+        xml_request_str = self.xml_request.decode()
+        child_ns_removed = xml_request_str.replace('xmlns="http://accounts.webservices.cyclos.strohalm.nl/"', '')
+        self.xml_response = self.send(method, str.encode(child_ns_removed))
         response = SimpleXMLElement(self.xml_response, namespace=self.namespace,
                                     jetty=self.__soap_server in ('jetty',))
         if self.exceptions and response("Fault", ns=list(soap_namespaces.values()), error=False):
