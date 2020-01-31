@@ -1,5 +1,3 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by the
 # Free Software Foundation; either version 3, or (at your option) any later
@@ -17,14 +15,14 @@ import logging
 import ssl
 import sys
 try:
-    import urllib2
-    from cookielib import CookieJar
+    import urllib.request, urllib.error, urllib.parse
+    from http.cookiejar import CookieJar
 except ImportError:
     from urllib import request as urllib2
     from http.cookiejar import CookieJar
 
 from . import __author__, __copyright__, __license__, __version__, TIMEOUT
-from .simplexml import SimpleXMLElement, TYPE_MAP, Struct
+from .simplexml import SimpleXMLElement, TYPE_MAP#, Struct
 
 log = logging.getLogger(__name__)
 
@@ -112,6 +110,8 @@ else:
 # urllib2 support.
 #
 class urllib2Transport(TransportBase):
+    from urllib import request as urllib2
+
     _wrapper_version = "urllib2 %s" % urllib2.__version__
     _wrapper_name = 'urllib2'
 
@@ -130,21 +130,21 @@ class urllib2Transport(TransportBase):
             context = ssl.create_default_context()
             context.check_hostname = False
             context.verify_mode = ssl.CERT_NONE
-            handlers.append(urllib2.HTTPSHandler(context=context))
+            handlers.append(urllib.request.HTTPSHandler(context=context))
         
         if sessions:
-            handlers.append(urllib2.HTTPCookieProcessor(CookieJar()))
+            handlers.append(urllib.request.HTTPCookieProcessor(CookieJar()))
         
-        opener = urllib2.build_opener(*handlers)
+        opener = urllib.request.build_opener(*handlers)
         self.request_opener = opener.open
         self._timeout = timeout
 
     def request(self, url, method="GET", body=None, headers={}):
-        req = urllib2.Request(url, body, headers)
+        req = urllib.request.Request(url, body, headers)
         try:
             f = self.request_opener(req, timeout=self._timeout)
             return f.info(), f.read()
-        except urllib2.HTTPError as f:
+        except urllib.error.HTTPError as f:
             if f.code != 500:
                 raise
             return f.info(), f.read()
@@ -165,10 +165,10 @@ except ImportError:
     pass
 else:
     try:
-        from cStringIO import StringIO
+        from io import StringIO
     except ImportError:
         try:
-            from StringIO import StringIO
+            from io import StringIO
         except ImportError:
             from io import StringIO
 
@@ -205,7 +205,7 @@ else:
                 c.setopt(pycurl.POST, 1)
                 c.setopt(pycurl.POSTFIELDS, body)
             if headers:
-                hdrs = ['%s: %s' % (k, v) for k, v in headers.items()]
+                hdrs = ['%s: %s' % (k, v) for k, v in list(headers.items())]
                 log.debug(hdrs)
                 c.setopt(pycurl.HTTPHEADER, hdrs)
             c.perform()
@@ -246,7 +246,7 @@ def get_http_wrapper(library=None, features=[]):
 
     # If we are asked for a connector which supports the given features, then we will
     # try that.
-    current_candidates = _http_connectors.keys()
+    current_candidates = list(_http_connectors.keys())
     new_candidates = []
     for feature in features:
         for candidate in current_candidates:
