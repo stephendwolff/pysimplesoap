@@ -185,13 +185,13 @@ class SimpleXMLElement(object):
     def as_xml(self,filename=None,pretty=False):
         "Return the XML representation of the document"
         if not pretty:
-            return self.__document.toxml('UTF-8')
+            return self.__document.toxml('UTF-8').decode()
         else:
-            return self.__document.toprettyxml(encoding='UTF-8')
+            return self.__document.toprettyxml(encoding='UTF-8').decode()
 
     def __repr__(self):
         "Return the XML representation of this tag"
-        return self._element.toxml('UTF-8')
+        return self._element.toxml('UTF-8').decode()
 
     def get_name(self):
         "Return the tag name of this node"
